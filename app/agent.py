@@ -5,7 +5,7 @@ from langgraph.graph.message import add_messages
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 from langsmith import traceable
-
+import os
 from app.config import get_settings
 
 class AgentState(TypedDict):
@@ -24,6 +24,14 @@ class ProductionAgent:
 
     def __init__(self):
         self.settings = get_settings()
+
+        self.settings = get_settings()
+
+        os.environ["LANGSMITH_TRACING"] = str(
+            self.settings.langsmith_tracing
+        ).lower()
+        os.environ["LANGSMITH_API_KEY"] = self.settings.langsmith_api_key
+        os.environ["LANGSMITH_PROJECT"] = self.settings.langsmith_project
 
         self.main_llm = ChatGoogleGenerativeAI(
             model=self.settings.primary_model,
@@ -147,3 +155,4 @@ class ProductionAgent:
             "model_used": result.get('model_used', "unknown"),
             "error": result.get('error')
         }
+
