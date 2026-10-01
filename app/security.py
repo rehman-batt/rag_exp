@@ -7,6 +7,10 @@ import re
 from typing import Optional
 from langsmith import traceable
 
+## To DO
+ # Add Smarter LLM Based Prompt Sanitization
+ 
+
 class PromptSenitizer:
 
     INJECTION_PATTERNS = [
@@ -46,4 +50,67 @@ class PromptSenitizer:
         for pattern in self.compiled_patterns:
             text = pattern.sub("", text)
         return text.strip()
+
+class PIIDetector:
+    """
+    Class to detect Personally Identifiable Information (PII) in text.
+    This is a placeholder for future implementation of PII detection logic.
+    """
+
+    PATTERNS = {
+        "email": re.compile(
+            r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b"
+        ),
+
+        "phone": re.compile(
+            r"\+?\d[\d\s-]{8,12}\d"
+        ),
+
+        "ssn": re.compile(
+            r"\b\d{3}-\d{2}-\d{4}\b"
+        ),
+
+        "credit_card": re.compile(
+            r"\b(?:\d[ -]?){12,15}\d\b"
+        ),
+
+        "ip_address": re.compile(
+            r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
+        ),
+    }
+
+    MASK_PATTERNS = {
+        "email": "[EMAIL]",
+        "phone": "[PHONE]",
+        "ssn": "[SSN]",
+        "credit_card": "[CREDIT_CARD]",
+        "ip_address": "[IP_ADDRESS]",
+    }
+
+    def __init__(self):
+        pass
+
+    def detect(self, text: str) -> bool:
+        """
+        Detect if the input text contains any PII.
+        Returns True if PII is detected, False otherwise.
+        """
+        patterns_found = {}
+
+        for key, pattern in self.PATTERNS.items():
+            if pattern.search(text):
+                patterns_found[key] = True
+            
+        return len(patterns_found) > 0, patterns_found
+
+    def mask(self, text: str) -> str:
+        """
+        Mask any detected PII in the input text.
+        Returns the text with PII masked.
+        """
+        for key, pattern in self.PATTERNS.items():
+            text = pattern.sub(self.MASK_PATTERNS[key], text)
+        return text
+
+
 
