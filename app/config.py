@@ -14,13 +14,13 @@ class Settings(BaseSettings):
     fallback_model: str = "gemini-3.7-flash"
 
     #LangSmith
-    lanchain_tracing_v2: bool = True
+    langchain_tracing_v2: bool = True
     langsmith_api_key: str
     langsmith_project: str
 
-    app_env: str = "development"
+    api_env: str = "development"
     log_level: str = "INFO"
-    rate_limit_per_minute: int = 20
+    rate_limit: int = 20
     cache_ttl_seconds: int = 300
     max_retries: int = 3
 
