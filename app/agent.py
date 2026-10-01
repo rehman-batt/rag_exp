@@ -27,11 +27,11 @@ class ProductionAgent:
 
         self.settings = get_settings()
 
-        os.environ["LANGSMITH_TRACING"] = str(
-            self.settings.langsmith_tracing
+        os.environ["LANGCHAIN_TRACING_V2"] = str(
+            self.settings.langchain_tracing_v2
         ).lower()
-        os.environ["LANGSMITH_API_KEY"] = self.settings.langsmith_api_key
-        os.environ["LANGSMITH_PROJECT"] = self.settings.langsmith_project
+        os.environ["LANGCHAIN_API_KEY"] = self.settings.langchain_api_key
+        os.environ["LANGCHAIN_PROJECT"] = self.settings.langchain_project
 
         self.main_llm = ChatGoogleGenerativeAI(
             model=self.settings.primary_model,
@@ -155,4 +155,3 @@ class ProductionAgent:
             "model_used": result.get('model_used', "unknown"),
             "error": result.get('error')
         }
-
