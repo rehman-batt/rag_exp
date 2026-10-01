@@ -10,13 +10,13 @@ class Settings(BaseSettings):
 
     #LLM Configuration
     gemini_api_key: str
-    primary_model: str = "gemini-3.7-flash"
-    fallback_model: str = "gemini-3.6-flash"
+    primary_model: str = "gemini-3.8-flash"
+    fallback_model: str = "gemini-3.7-flash"
 
     #LangSmith
     lanchain_tracing_v2: bool = True
-    langchain_api_key: str
-    langchain_project: str
+    langsmith_api_key: str
+    langsmith_project: str
 
     app_env: str = "development"
     log_level: str = "INFO"
