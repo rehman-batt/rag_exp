@@ -35,6 +35,11 @@ class JSONFormatter(logging.Formatter):
         
         return logger
 
+
+def get_logger(name: str = "prod_rag") -> logging.Logger:
+    """Return a logger configured to emit JSON-formatted records."""
+    return JSONFormatter().get_logger(name)
+
 class MetricsCollector:
     """
     Class to collect and log metrics for function execution.
@@ -92,4 +97,3 @@ class RequestTimer:
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.end_time = time.time()
         self.elapsed_time = self.end_time - self.start_time
-
