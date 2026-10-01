@@ -8,7 +8,7 @@ from typing import Optional
 from langsmith import traceable
 
 ## To DO
- # Add Smarter LLM Based Prompt Sanitization
+ # Add Smarter JEV Based Prompt and Output Classifier
  
 
 class PromptSenitizer:
@@ -54,7 +54,6 @@ class PromptSenitizer:
 class PIIDetector:
     """
     Class to detect Personally Identifiable Information (PII) in text.
-    This is a placeholder for future implementation of PII detection logic.
     """
 
     PATTERNS = {
@@ -112,5 +111,66 @@ class PIIDetector:
             text = pattern.sub(self.MASK_PATTERNS[key], text)
         return text
 
+class OutputSenitization:
+    """
+    Class to sanitize the output text from the AI model.
+    This is a placeholder for future implementation of output sanitization logic.
+    """
+
+    def __init__(self):
+        pass
+
+    def sanitize(self, text: str) -> str:
+        """
+        Sanitize the output text.
+        Returns the sanitized text.
+        """
+        # Placeholder for actual sanitization logic
+        return text
+
+
+
+class SecurityManager:
+    """
+    Security Manager to handle prompt sanitization and PII detection.
+    """
+
+    def __init__(self):
+        self.prompt_sanitizer = PromptSenitizer()
+        self.pii_detector = PIIDetector()
+        # self.output_sanitizer = OutputSenitization()
+
+    def process_input(self, prompt: str) -> tuple[bool, str, Optional[str]]:
+        """
+        Returns: is_safe, sanitized_prompt, warning_message
+        """
+
+        is_safe, matched_pattern = self.prompt_sanitizer.check(prompt)
+
+        if not is_safe:
+            return (False, "", f"Prompt Injection Detected: {matched_pattern}")
+
+        # Clean prompt injection-like content if needed
+        sanitized_prompt = self.prompt_sanitizer.clean(prompt)
+
+        # Detect and mask PII
+        contains_pii, pii_patterns = self.pii_detector.detect(sanitized_prompt)
+
+        if contains_pii:
+            sanitized_prompt = self.pii_detector.mask(sanitized_prompt)
+
+            return (
+                True, sanitized_prompt, f"PII detected and masked: {pii_patterns}"
+            )
+
+        return True, sanitized_prompt, None
+        
+
+    # def process_output(self, output: str) -> str:
+    #     """
+    #     Sanitize the output text from the AI model.
+    #     Returns the sanitized output.
+    #     """
+    #     return self.output_sanitizer.sanitize(output)
 
 
