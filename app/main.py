@@ -28,6 +28,17 @@ logger = get_logger()
 
 load_dotenv()  
 
+
+def _response_text(content: str | list[dict]) -> str:
+    """Extract text from the string or text-block content returned by the model."""
+    if isinstance(content, str):
+        return content
+    return "".join(
+        block["text"]
+        for block in content
+        if isinstance(block, dict) and isinstance(block.get("text"), str)
+    )
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -59,6 +70,7 @@ limiter = Limiter(key_func=get_remote_address, default_limits=[f"{get_settings()
 
 app = FastAPI(title="Production RAG API", version="1.0.0", lifespan=lifespan)
 
+
 app.state.limiter = limiter
 
 @app.post("/chat", response_model=ChatResponse)
@@ -81,7 +93,8 @@ async def chat_endpoint(request: Request, chat_request: ChatRequest):
         security_notes = []
 
         is_authorized, cleaned_message, notes = security.process_input(chat_request.message)
-        security_notes.extend(notes)
+        if notes:
+            security_notes.append(notes)
 
 
         if not is_authorized:
@@ -91,16 +104,18 @@ async def chat_endpoint(request: Request, chat_request: ChatRequest):
 
 
         # Check if the response is cached
-        cached_response = cache.get(chat_request)
+        cached_response = cache.get(cleaned_message)
         if cached_response:
-            metrics.update_metrics(latency=timer.elapsed_time, cache_hit=True)
-            logger.info("Cache hit for request", extra={"extra_data": {"request": chat_request.dict(), "response": cached_response.dict()}, "tracing_enabled": get_settings().langchain_tracing_v2})
+            elapsed_time = timer.elapsed_time
+            cached_response = _response_text(cached_response)
+            metrics.update_metrics(latency=elapsed_time, cache_hit=True)
+            logger.info("Cache hit for request", extra={"extra_data": {"request": chat_request.model_dump(), "response": cached_response}, "tracing_enabled": get_settings().langchain_tracing_v2})
             return ChatResponse(
                 response=cached_response,
                 thread_id=chat_request.thread_id,
                 model_used="cache",
                 cached=True,
-                processing_time_ms=0,
+                processing_time_ms=elapsed_time * 1000,
 
             )
 
@@ -116,26 +131,32 @@ async def chat_endpoint(request: Request, chat_request: ChatRequest):
                 detail="An error occured while processing your request."
             )
 
-        response_text = agent_response["response"]
+        response_text = _response_text(agent_response["response"])
         model_used = agent_response["model_used"]
 
         # Cache Store
 
         cache.set(cleaned_message, response_text)
 
-    input_tokens = int(len(cleaned_message.split())) * 1.3
-    output_tokens = int(len(response_text.split())) * 1.3
+    input_tokens = int(len(cleaned_message.split()) * 1.3)
+    output_tokens = int(len(response_text.split()) * 1.3)
 
     metrics.update_metrics(timer.elapsed_time, False, input_tokens, output_tokens)
 
     if security_notes:
-        logger.inf("Security Notes", extra={"extra_data": {
+        logger.info("Security Notes", extra={"extra_data": {
             "notes": security_notes,
             "thread_id": chat_request.thread_id
         }})
 
+    return ChatResponse(
+        response=response_text,
+        thread_id=chat_request.thread_id,
+        model_used=model_used,
+        cached=False,
+        processing_time_ms=timer.elapsed_time * 1000,
+    )
 
-        
 @app.get("/health", response_model=HealthResponse)
 async def health():
     """Health Check Endpoint"""
@@ -152,18 +173,19 @@ async def health():
 
     return HealthResponse(
         status="healthy" if healthy else "degraded",
-        environment=settings.app_env,
+        environment=settings.api_env,
         checks=checks
     )
 
 @app.get("/metrics", response_model=MetricsResponse)
 async def get_metrics():
     """Metrics for monitoring dashboards."""
-    summary = metrics.log_metrics
+    summary = metrics.log_metrics()
+   
 
     return MetricsResponse(**summary)
 
-@app.get("cache/stats")
+@app.get("/cache_stats")
 async def cache_stats():
     """Cache performance"""
-    return cache.stats
+    return cache.stats()

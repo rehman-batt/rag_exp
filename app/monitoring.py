@@ -74,6 +74,9 @@ class MetricsCollector:
         Log the collected metrics using the provided logger.
         """
         avg_latency = self._latency_sum / self._latency_count if self._latency_count > 0 else 0.0
+        error_rate = self._errors_count / self._requests_count if self._requests_count > 0 else 0.0
+        cache_hit_rate = self._cache_hits / self._requests_count if self._requests_count > 0 else 0.0
+         
         metrics = {
             "requests_count": self._requests_count,
             "errors_count": self._errors_count,
@@ -81,7 +84,9 @@ class MetricsCollector:
             "input_tokens": self._input_token,
             "output_tokens": self._output_token,
             "cache_hits": self._cache_hits,
-            "cache_misses": self._cache_misses
+            "cache_misses": self._cache_misses,
+            "error_rate": str(error_rate) + "%",
+            "cache_hit_rate": str(cache_hit_rate) + "%"
         }
 
         return metrics
@@ -95,6 +100,10 @@ class RequestTimer:
         self.start_time = time.time()
         return self
 
+    @property
+    def elapsed_time(self) -> float:
+        """Return elapsed seconds, including while the timed block is running."""
+        return getattr(self, "end_time", time.time()) - self.start_time
+
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.end_time = time.time()
-        self.elapsed_time = self.end_time - self.start_time

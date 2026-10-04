@@ -37,14 +37,14 @@ class HealthResponse(BaseModel):
 
 class MetricsResponse(BaseModel):
     """Metrics endpoint response"""
-    total_requests: int
-    total_errors: int
+    requests_count: int
+    errors_count: int
     error_rate: str
-    avg_latency_ms: float
+    average_latency: float
     cache_hit_rate: str
-    total_input_tokens: int
-    total_output_tokens: int
-
+    input_tokens: int
+    output_tokens: int
+            
 class ErrorResponse(BaseModel):
     """Standard error response"""
     error: str
