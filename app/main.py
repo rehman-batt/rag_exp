@@ -123,5 +123,47 @@ async def chat_endpoint(request: Request, chat_request: ChatRequest):
 
         cache.set(cleaned_message, response_text)
 
+    input_tokens = int(len(cleaned_message.split())) * 1.3
+    output_tokens = int(len(response_text.split())) * 1.3
+
+    metrics.update_metrics(timer.elapsed_time, False, input_tokens, output_tokens)
+
+    if security_notes:
+        logger.inf("Security Notes", extra={"extra_data": {
+            "notes": security_notes,
+            "thread_id": chat_request.thread_id
+        }})
+
+
         
-        
+@app.get("/health", response_model=HealthResponse)
+async def health():
+    """Health Check Endpoint"""
+
+    settings = get_settings()
+
+    checks = {
+        "agent": agent is not None,
+        "security": security is not None,
+        "cache": cache is not None
+    }
+
+    healthy = all(checks.values())
+
+    return HealthResponse(
+        status="healthy" if healthy else "degraded",
+        environment=settings.app_env,
+        checks=checks
+    )
+
+@app.get("/metrics", response_model=MetricsResponse)
+async def get_metrics():
+    """Metrics for monitoring dashboards."""
+    summary = metrics.log_metrics
+
+    return MetricsResponse(**summary)
+
+@app.get("cache/stats")
+async def cache_stats():
+    """Cache performance"""
+    return cache.stats
