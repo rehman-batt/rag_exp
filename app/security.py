@@ -107,7 +107,8 @@ class PIIDetector:
         Mask any detected PII in the input text.
         Returns the text with PII masked.
         """
-        for key, pattern in self.PATTERNS.items():
+        for key in ("credit_card", "ssn", "email", "ip_address", "phone"):
+            pattern = self.PATTERNS[key]
             text = pattern.sub(self.MASK_PATTERNS[key], text)
         return text
 
@@ -172,5 +173,4 @@ class SecurityManager:
     #     Returns the sanitized output.
     #     """
     #     return self.output_sanitizer.sanitize(output)
-
 
