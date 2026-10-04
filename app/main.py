@@ -42,7 +42,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting application in {settings.api_env}", extra={"extra_data": {"env": settings.api_env, "log_level": settings.log_level, "primary_model": settings.primary_model, "fallback_model": settings.fallback_model}, "tracing_enabled": settings.langchain_tracing_v2})
 
     security = SecurityManager()
-    cache = ResponseCache(ttl_seconds=settings.cache_ttl_seconds)
+    cache = ResponseCache(ttl=settings.cache_ttl_seconds)
     metrics = MetricsCollector()
     agent = ProductionAgent()
 
