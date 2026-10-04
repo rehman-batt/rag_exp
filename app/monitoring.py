@@ -44,7 +44,7 @@ class MetricsCollector:
     """
     Class to collect and log metrics for function execution.
     """
-    def __init__(self, logger: logging.Logger):
+    def __init__(self):
         self._requests_count = 0
         self._errors_count = 0
         self._latency_sum = 0.0
@@ -69,7 +69,7 @@ class MetricsCollector:
         else:
             self._cache_misses += 1
 
-    def log_metrics(self, logger: logging.Logger) -> None:
+    def log_metrics(self) -> None:
         """
         Log the collected metrics using the provided logger.
         """
@@ -83,7 +83,8 @@ class MetricsCollector:
             "cache_hits": self._cache_hits,
             "cache_misses": self._cache_misses
         }
-        logger.info("Metrics collected", extra={"extra_data": metrics})
+
+        return metrics
 
 
 class RequestTimer:
